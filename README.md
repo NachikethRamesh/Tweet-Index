@@ -11,6 +11,8 @@ are. Everything stays on your machine except the model calls.
 It is a personal tool, published because the shape of it may be useful. There
 is no hosted version and no account to make.
 
+<img width="4440" height="2790" alt="Tweet Index" src="https://github.com/user-attachments/assets/f3c2c5a2-ea26-44a6-9cfe-2ef936abc5cb" />
+
 ```
 $ ti
 Tweet Index  —  4,812 tweets
