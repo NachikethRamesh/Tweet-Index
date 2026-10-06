@@ -1,0 +1,38 @@
+# Evaluation topics (Section 13.1).
+#
+# No `expected` lists here. Section 13.1 has them chosen by hand, which bakes
+# in whatever the ranking already favoured when they were written -- the same
+# circularity that made the Phase 1 acceptance criterion weak. Instead the
+# three versions are pooled, the pool is judged blind, and every tweet marked
+# relevant for a topic becomes its expected set. See evals/judge.py.
+#
+# Topics span both feeds, which cover different subjects (Section 7.5): the
+# first thirteen lean on likes (AI, product, careers, strategy), the rest on
+# bookmarks (fitness, interiors, culture) and on subjects that depend on links
+# or images.
+
+topics:
+  # Replace these with your own: twenty subjects you actually save things
+  # about. They decide what the evaluation measures, so vague topics give
+  # vague numbers. Specific beats broad -- "how to evaluate AI agents" tells
+  # you more than "AI".
+  - how to evaluate AI agents
+  - retrieval augmented generation
+  - prompt engineering techniques
+  - SQLite performance tuning
+  - Python packaging and virtual environments
+  - startup pricing strategy
+  - getting your first paying customers
+  - hiring your first engineers
+  - writing clearly for a technical audience
+  - career advice for software engineers
+  - books worth reading twice
+  - GPU architecture and CUDA
+  - running models locally
+  - web scraping without getting blocked
+  - strength training programmes
+  - running a first marathon
+  - small space interior design
+  - football tactics and analytics
+  - home espresso setup
+  - personal finance and index funds

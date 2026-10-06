@@ -1,0 +1,94 @@
+# Tweet Index configuration.
+# Phases 0-2 use `paths`, `embedding`, `llm` and `ask.top_k`. Later phases
+# add the jev and tagging blocks, and the rest of `ask` (Section 4).
+
+paths:
+  downloads: ~/Downloads     # where the userscript drops capture_*.json
+  raw: data/raw              # immutable copies of every capture
+  media: data/media          # downloaded images (Phase 4)
+  db: data/index.db          # the SQLite database
+  # The captures are the only irreplaceable data: everything else can be
+  # rebuilt from them. Each file is written once and never changed, so it is
+  # safe to keep in a synced folder -- unlike the database, which corrupted
+  # when a sync client wrote to it mid-run. ingest.py copies every
+  # file it processes here.
+  # Optional second copy of every capture, somewhere synced. Uncomment
+  # and point it wherever you like; leave it out and no copy is made.
+  # raw_backup: ~/Dropbox/tweet-index-backup/raw
+
+# Phase 1. Values exactly as Section 4 specifies.
+embedding:
+  model: BAAI/bge-small-en-v1.5
+  # bge models are trained to embed short search queries with this
+  # instruction and documents without it (Section 9).
+  query_prefix: "Represent this sentence for searching relevant passages: "
+
+ask:
+  top_k: 10                  # --basic prints a plain top-10 list
+
+  # Phase 2, Section 11. Every number here is meant to be tuned via evals.
+  candidate_cap: 120         # how many go from cosine to the Jev rerank
+  banded_top_k: 5            # Section 4 calls this top_k; renamed so --basic
+  max_maybes: 3              # keeps its own 10
+
+  weights:
+    relevance: 0.65          # Section 11.3
+    substance: 0.35
+    cosine: 0.15             # NOT in Section 11.3; added so the embedding
+                             # score still counts for something after rerank
+    tag_hit: 0.05            # Phase 3; always 0 until a vocabulary exists
+    both_saved: 0.02
+
+  top_min_relevance_level: 2.5
+  maybe_min_relevance_level: 2.0
+  # Applies to relevance AND substance confidence. Lowered from 0.50 to 0.40
+  # after the Phase 4 evaluation: 11 of 20 topics gain strong matches and none
+  # lose any, at no measured cost to Recall@10.
+  confidence_floor: 0.40
+
+  # Substance never reaches 4.0: the score is a probability-weighted mean of
+  # level numbers, and the corpus maximum is 3.89. Normalising by 4 would
+  # silently cap the substance term at 97% of its weight.
+  substance_max: 3.9
+  # When substance confidence is below the floor, the judgment is not
+  # trustworthy either way. Treating it as 0 would push down short, useful
+  # tweets, so it falls back to the corpus median instead.
+  substance_neutral: 1.18
+  relevance_max: 4.0
+
+# Phase 2. The design (Section 3.2) names the Anthropic SDK and
+# claude-haiku-4-5; this build uses OpenAI instead, per instruction.
+# gpt-6-luna is OpenAI's efficiency model for high-volume structured work
+# (released 2026-09-22): $0.10 in / $0.50 out per million tokens.
+llm:
+  provider: openai
+  enrich_model: gpt-6-luna
+  # No explain_model: Section 11.3's query-time explanation call is not built,
+  # so nothing at query time uses an LLM. Results show their stored enrichment
+  # summary instead.
+  concurrency: 8
+  # gpt-6-luna is a reasoning model and its thinking tokens come out of the
+  # same budget as the answer. At 400 the reply sometimes arrived empty, so
+  # the budget is larger and the thinking is kept short.
+  max_output_tokens: 700
+  reasoning_effort: low
+
+# Provider rate limits (Phase 2). Both budgets are paced by
+# tweet_index/ratelimit.py; headroom keeps a margin below the published
+# figures, because our token accounting and the provider's never agree
+# exactly. OpenAI's numbers come from the x-ratelimit-* response headers;
+# TypeSafe's from Section 12.1.
+rate_limits:
+  openai:
+    requests_per_minute: 500
+    tokens_per_minute: 200000
+    headroom: 0.10
+  typesafe:
+    requests_per_minute: 1080      # Section 12.1: limiter at 18 req/s
+    tokens_per_minute: 15000000    # 250,000 tokens/s
+    headroom: 0.10
+
+# Phase 3 (tagging) and Phase 2's relevance rerank. Pinned: an alias would
+# move when TypeSafe ships and silently shift every tuned threshold.
+jev:
+  model: jev-1.13.0

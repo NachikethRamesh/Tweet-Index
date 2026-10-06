@@ -1,0 +1,20 @@
+# Phase 0: capture and storage.
+# Storage is sqlite3, which ships with Python, so nothing is needed for it.
+PyYAML==6.0.2      # reads config.yaml
+pytest==8.3.3      # runs tests/test_parse.py
+
+# Phase 1: local embeddings and brute-force cosine search (Section 3.2).
+sentence-transformers==3.2.1   # loads BAAI/bge-small-en-v1.5
+numpy==2.1.3                   # the vector matrix and the dot product
+
+# Phase 2: the LLM wrapper. NOT in Section 3.2, which names the Anthropic
+# SDK; OpenAI was chosen instead by instruction, and this is its client.
+openai==2.11.0
+
+# Phase 2/3: typed decisions from Jev (Section 3.2).
+typesafe-sdk==0.7.2
+
+# aiolimiter is NOT used: it is asyncio-only and paces a single budget, while
+# the enrichment path is threaded and needs requests AND tokens paced
+# together. tweet_index/ratelimit.py does both. See FINDINGS.md.
+# python-dotenv is not needed: enrich.py reads .env itself (KEY=value only).
